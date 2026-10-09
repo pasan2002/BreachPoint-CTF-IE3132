@@ -1,0 +1,27 @@
+﻿# Machine 2 CTFd Runtime & Database Volumes (Keep uploads tracked for logos/branding)
+#machine2-ctfd/ctfd/mysql-data/
+#machine2-ctfd/ctfd/logs/
+mysql-data/
+
+# Python & Environment artifacts
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Reports and documentation drafts
+*.docx
+*.pdf
+!README.md
+
+# Temporary scratch scripts (seed.py is kept)
+make_logo.py
+generate_enc.py
+update_challenges.py
+test_*.py
