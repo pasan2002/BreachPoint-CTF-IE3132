@@ -1,0 +1,9 @@
+BPCTF{f0r3ns1cs_4rt3f4ct_r3c0v3r3d}
+
+--- Internal Memo (Confidential) ---
+Incident investigation notes - NovaTech Corp
+
+During post-incident analysis, a misconfigured SUID binary was discovered
+on this server. Investigate further.
+
+Root flag location: /root/flag.txt
