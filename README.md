@@ -1,159 +1,192 @@
+<div align="center">
+
+<img src="https://res.cloudinary.com/dl9ectnzs/image/upload/v1791022194/Screenshot_2026-10-03_153943_rcj1dy.png" alt="SLIIT Logo" width="320"/>
+
 # BreachPoint CTF — Multi-Stage Penetration Testing Play Box
+### Realistic Enterprise Compromise Chain & Dual-Host CTF Environment
 
-**Module:** IE3132 - Penetration Testing (Year 3, Semester 1)  
-**Academic Year:** 2026  
-**Institution:** Sri Lanka Institute of Information Technology (SLIIT) — Faculty of Computing  
-**Group:** Group 05  
-**Submission Package:** `IT24100239_IT24100172_IT24100258_IT24100975`  
-**Platform Architecture:** Dual-Host Containerized Infrastructure (Docker Compose)  
+**Sri Lanka Institute of Information Technology (SLIIT)**  
+**Faculty of Computing — Cyber Security Specialization**  
+**Module:** IE3132 - Penetration Testing (Year 3, Semester 1 — 2026)  
+**Group:** Group 05 | **Submission Package:** `IT24100239_IT24100172_IT24100258_IT24100975`
 
 ---
 
-## 👥 Group Members & Individual Responsibilities
+</div>
 
-As defined and approved in Assignment 01, each member owns an independent component evaluated individually out of 100 marks:
+## 📌 Project Overview
 
-| Member ID | Student Name | Role | Assigned Stages / Components | Self-Developed Script (LO3) |
+**BreachPoint CTF** is a custom-engineered, multi-stage vulnerable playground and Capture The Flag (CTF) evaluation environment modeled after real-world advanced persistent threat (APT) kill chains. Designed around the fictional infrastructure of **NovaTech Corp**, the platform presents an end-to-end attack narrative: from unauthenticated external OSINT reconnaissance, through API credential leakage, administrative portal privilege escalation, and remote command injection, to post-exploitation forensics and Linux SUID root privilege escalation.
+
+The platform is engineered on an isolated **Dual-Host Containerized Architecture** using Docker Compose. Challenge execution nodes are physically decoupled from the scoring and validation plane (CTFd), ensuring that even a total root-level compromise of the challenge host cannot compromise or disrupt the CTF scoring infrastructure.
+
+---
+
+## 👥 Team Members & Responsibilities
+
+| Student ID | Member Name | Role | Responsibilities & Component Ownership | Key Artifacts & LO3 Script |
 |:---:|:---|:---|:---|:---|
-| **IT24100239** | Disanayaka D.M.C.N | **Member 1: Platform & Architecture** | Machine 1 & 2 Docker Compose, Nginx Reverse Proxy routing, container hardening, network isolation | [`scripts/audit_platform.py`](scripts/audit_platform.py) |
-| **IT24100172** | Abeysekara T.T | **Member 2: Challenge Design A** | Stage 1 (OSINT), Stage 2 (API Security), Stage 3 (Web Authentication & Access Control) | [`scripts/solve_stages_1_to_3.py`](scripts/solve_stages_1_to_3.py) |
-| **IT24100258** | Hewavitharana H.U.P | **Member 3: Challenge Design B** | Stage 4 (Command Injection & Crypto), Stage 5 (Forensics), Stage 6 (SUID Privilege Escalation) | [`scripts/exploit_stage4_crypto.py`](scripts/exploit_stage4_crypto.py)<br>[`scripts/solve_stages_5_and_6.py`](scripts/solve_stages_5_and_6.py) |
-| **IT24100975** | Haggalla H.H.D.S | **Member 4: Integration, Testing & Docs** | CTFd scoring platform, UI customization, end-to-end QA validation, defect triage & design patches | [`scripts/validate_killchain_e2e.py`](scripts/validate_killchain_e2e.py) |
+| **IT24100239** | Disanayaka D.M.C.N | **Platform & Architecture** | Dual-host Docker Compose orchestration, Nginx reverse proxy routing, internal network segmentation, container hardening, resource constraints. | `audit_platform.py`<br>`machine1-challenges/docker-compose.yml`<br>`machine2-ctfd/docker-compose.yml` |
+| **IT24100172** | Abeysekara T.T | **Challenge Design A** | Design and implementation of Stages 1, 2, and 3: static web assets, unauthenticated REST API endpoint, role-based auth portal, and MySQL backend. | `solve_stages_1_to_3.py`<br>`s1-web/`, `s2-api/`<br>`s3-portal/` |
+| **IT24100258** | Hewavitharana H.U.P | **Challenge Design B** | Design and implementation of Stages 4, 5, and 6: diagnostic command injection utility, 3-layer cryptographic generator, OpenSSH container, and custom SUID binary. | `exploit_stage4_crypto.py`<br>`solve_stages_5_and_6.py`<br>`s4-files/`, `s5s6-ssh/` |
+| **IT24100975** | Haggalla H.H.D.S | **Integration, Testing & Docs** | CTFd platform deployment, custom challenge board UI styling, end-to-end QA validation, defect discovery (BUG-01 to BUG-05), and design iteration patches. | `validate_killchain_e2e.py`<br>`DESIGN_CHANGES_AND_TESTING_REPORT.md`<br>`challenges.json`, `init.sql` |
 
 ---
 
-## 📐 Platform Architecture Overview
+## 📐 Dual-Host Platform Architecture
 
-The BreachPoint CTF play box models a real-world enterprise compromise chain across a **Dual-Host Containerized Architecture**, separating challenge targets from the platform scoring engine:
+The platform architecture strictly segregates the **Challenge Environment (Machine 1)** from the **Scoring & Platform Control Plane (Machine 2)**, connected only across an isolated participant network:
 
-```text
-                  +-------------------------------------------------------+
-                  |               Participant Attacker Host               |
-                  +-------------------------------------------------------+
-                                    |                   |
-                     HTTP / Port 80 |                   | HTTP / Port 8000 (CTFd)
-                                    v                   v
-+---------------------------------------+   +---------------------------------------+
-|              MACHINE 1                |   |              MACHINE 2                |
-|       (Challenge Infrastructure)      |   |    (Scoring & Platform Control)       |
-|                                       |   |                                       |
-|  +---------------------------------+  |   |  +---------------------------------+  |
-|  |     Nginx Reverse Proxy (:80)   |  |   |  |     Nginx Control Proxy (:8000) |  |
-|  +---------------------------------+  |   |  +---------------------------------+  |
-|                  |                    |   |                  |                    |
-|    +-------------+-------------+      |   |                  v                    |
-|    |             |             |      |   |  +---------------------------------+  |
-|    v             v             v      |   |  |       CTFd Scoring Engine       |  |
-| [s1-web]    [s2-api]     [s3-portal]  |   |  +---------------------------------+  |
-|                            |          |   |                  |                    |
-|                            v          |   |                  v                    |
-|                         [s3-db]       |   |  +---------------------------------+  |
-|                            |          |   |  |       MariaDB 10.11 Database    |  |
-|                            v          |   |  +---------------------------------+  |
-|                         [s4-files]    |   +---------------------------------------+
-|                            |          |
-|    SSH / 2222              v          |
-|  ----------->          [s5s6-ssh]     |
-+---------------------------------------+
-```
+<div align="center">
+
+<img src="https://res.cloudinary.com/dl9ectnzs/image/upload/v1791542791/diagram.drawio_zq0rwu.png" alt="BreachPoint CTF Dual-Host Architecture Diagram" width="90%"/>
+
+*Figure 1: Dual-Host Network Segmentation, Ingress Port Mappings, and Container Interaction Architecture.*
+
+</div>
+
+### Architecture Specifications:
+* **Machine 1 — Challenge Infrastructure:**
+  * Runs on dedicated Docker network `internal-net` (Subnet: `172.20.0.0/16`).
+  * Only two ports are exposed to the host: Port `80` (HTTP Ingress via Nginx Reverse Proxy) and Port `2222` (OpenSSH target).
+  * Direct access to internal application containers (`s1-web`, `s2-api`, `s3-portal`, `s4-files`) and database (`s3-db` : 3306) is blocked from external networks.
+* **Machine 2 — Scoring & Control Plane:**
+  * Runs on isolated Docker network `ctfd_internal` (Subnet: `172.21.0.0/16`).
+  * Dedicated MariaDB 10.11 instance stores user accounts, submissions, and flag hashes.
+  * Web interface is exposed exclusively on Port `8000` via Nginx reverse proxy.
+  * Complete isolation ensures root compromise of Machine 1 has zero attack vector against Machine 2.
 
 ---
 
 ## 🎯 Challenge Matrix & Difficulty Progression
 
-All 6 stages strictly satisfy the Assignment 02 progression requirements across 6 distinct cybersecurity domains:
+All 6 stages follow the approved difficulty curve (**Easy ➔ Easy ➔ Moderate ➔ Moderate ➔ Moderate–Hard ➔ Hard**), covering 6 distinct cybersecurity domains:
 
-| Stage | Challenge Name | Domain | Difficulty | Points | Vulnerability / Technique | Primary Tools Enforced | Flag String |
+| Stage | Challenge Name | Domain | Difficulty | Points | Vulnerability / Attack Vector | Primary Tools Required | Flag String |
 |:---:|:---|:---|:---:|:---:|:---|:---|:---|
-| **S1** | **Open Eyes** | OSINT & Passive Recon | Easy | 100 | HTML source disclosure & PNG metadata chunk leakage | Browser DevTools (`F12`), `curl`, ExifTool | `BPCTF{r3c0n_m4st3r}` |
-| **S2** | **Knock Knock** | Web API Security | Easy | 150 | OWASP API3: Unauthenticated endpoint `/api/v1/users` leaking admin credentials | `gobuster`, `curl`, Burp Suite | `BPCTF{4p1_3xp0sur3_l34ks_cr3ds}` |
-| **S3** | **The Login Wall** | Web Authentication | Moderate | 200 | Credential reuse + OWASP A01: Broken Access Control via cookie tampering (`nova_role=guest` ➔ `admin`) | Burp Suite Repeater, Cookie Inspector | `BPCTF{4uth_p0rt4l_4cc3ss}` |
-| **S4** | **Scrambled Secrets** | Web Exploitation & Cryptography | Moderate | 250 | CWE-78: OS Command Injection in diagnostics tool + 3-layer cipher (**Base64 ➔ ROT13 ➔ Vigenère key `lk`**) | Command Injection, `curl`, CyberChef | `BPCTF{crypt0_l4y3rs_d3c0d3d}` |
-| **S5** | **Dead Logs Tell Tales** | Digital Forensics | Moderate–Hard | 350 | `.bash_history` analysis, remote SCP exfiltration, offline archive dictionary cracking | OpenSSH, `scp`, `zip2john`, John the Ripper (`rockyou.txt`) | `BPCTF{f0r3ns1cs_4rt3f4ct_r3c0v3r3d}` |
-| **S6** | **Root of Evil** | Linux Privilege Escalation | Hard (Capstone) | 500 | Custom SUID wrapper binary `/usr/local/bin/reader` with GTFOBins pager escape (`!/bin/bash`) | Linux commands, `find`, `strings`, GTFOBins | `BPCTF{r00t_pr1v3sc_m1ss10n_c0mpl3t3}` |
-| **TOTAL** | **6 Stages** | **6 Domains** | — | **1,550** | Full Enterprise Compromise Kill Chain | — | — |
+| **S1** | **Open Eyes** | OSINT & Passive Recon | Easy | 100 | Source code comment leakage + PNG metadata chunk exposure (`tEXt:Artist`) | Browser DevTools (`F12`), `curl`, ExifTool | `BPCTF{r3c0n_m4st3r}` |
+| **S2** | **Knock Knock** | Web API Security | Easy | 150 | OWASP API3: Broken Object Property Level Auth — unauthenticated `/api/v1/users` leaks admin credentials | `gobuster`, `curl`, Burp Suite | `BPCTF{4p1_3xp0sur3_l34ks_cr3ds}` |
+| **S3** | **The Login Wall** | Web Authentication | Moderate | 200 | Credential reuse + OWASP A01: Broken Access Control via cookie tampering (`nova_role=guest` ➔ `admin`) | Burp Suite Repeater, DevTools Cookie Storage | `BPCTF{4uth_p0rt4l_4cc3ss}` |
+| **S4** | **Scrambled Secrets** | Web Exploitation & Cryptography | Moderate | 250 | CWE-78: OS Command Injection in ping utility + 3-layer cipher (**Base64 ➔ ROT13 ➔ Vigenère key `lk`**) | Command Injection, `curl`, CyberChef | `BPCTF{crypt0_l4y3rs_d3c0d3d}` |
+| **S5** | **Dead Logs Tell Tales** | Digital Forensics | Moderate–Hard | 350 | `.bash_history` inspection, SCP archive exfiltration, offline dictionary cracking with `rockyou.txt` | OpenSSH, `scp`, `zip2john`, John the Ripper | `BPCTF{f0r3ns1cs_4rt3f4ct_r3c0v3r3d}` |
+| **S6** | **Root of Evil** | Linux Privilege Escalation | Hard (Capstone) | 500 | Custom SUID binary `/usr/local/bin/reader` calling `less` with root UID; GTFOBins pager escape | Linux CLI, `find`, `strings`, GTFOBins | `BPCTF{r00t_pr1v3sc_m1ss10n_c0mpl3t3}` |
+| **TOTAL** | **6 Challenges** | **6 Domains** | — | **1,550** | **Complete Enterprise Attack Kill Chain** | — | — |
 
 ---
 
-## 🔒 Security Hardening & Isolation Controls (Requirement 4)
+## ⚡ Deployment & Running Commands (Quick-Start)
 
-1. **Host Ingress Minimization:**
-   * **Machine 1:** Only Port `80` (HTTP Reverse Proxy) and Port `2222` (OpenSSH target container) are exposed to the host. Internal challenge services (`s1-web`, `s2-api`, `s3-portal`, `s4-files`) and the database (`s3-db` : 3306) have no exposed host ports.
-   * **Machine 2:** Only Port `8000` (Nginx Control Proxy to CTFd) is published. MariaDB (:3306) is unexposed.
-2. **Network Segmentation:**
-   * Container communication is restricted to internal Docker bridge networks (`internal-net` and `ctfd_internal`).
-   * Challenge containers operate with `internal: true` where appropriate to prevent unauthorized outbound connections.
-3. **Container Escape Mitigations:**
-   * Stage 6 SUID binary requires `CAP_SETUID` and `CAP_SETGID` inside the container. Dangerous host privileges (`CAP_SYS_ADMIN`, raw socket mounts, `/var/run/docker.sock`) are omitted to prevent container escape to the host VM.
-4. **Independent Scoring Plane:**
-   * Compromising Machine 1 up to the `root` user inside `s5s6-ssh` grants no access to Machine 2 or the CTFd database.
+The entire play box can be deployed from scratch on any system with Docker Engine and Docker Compose installed.
 
----
-
-## 🚀 Deployment & Quick-Start Guide (Step-by-Step)
-
-The CTF environment can be deployed from scratch on any Docker-capable system:
-
-### Prerequisites
+### 1. Prerequisites
 * [Docker Engine](https://docs.docker.com/engine/install/) v20.10+
 * [Docker Compose](https://docs.docker.com/compose/install/) v2.0+
-* Python 3.9+ (for running evaluation scripts)
+* Python 3.9+ (for running solver and validation scripts)
 
 ---
 
-### Step 1: Deploy Machine 1 (Challenge Infrastructure)
-Open a terminal / PowerShell window:
+### 2. Start Machine 1 (Challenge Infrastructure)
+In your terminal / PowerShell:
+
 ```bash
+# Navigate to Machine 1 directory
 cd machine1-challenges
+
+# Build and start all 7 challenge containers in background
 docker compose up -d --build
 ```
-*Verify containers are running:*
+
+**Verify Machine 1 Status:**
 ```bash
 docker compose ps
 ```
-Services running: `nginx-proxy` (:80), `s1-web`, `s2-api`, `s3-portal`, `s3-db`, `s4-files`, `s5s6-ssh` (:2222).
+*Expected running services:*
+* `nginx-proxy` (Port `80` exposed)
+* `s1-web` (Internal)
+* `s2-api` (Internal)
+* `s3-portal` (Internal)
+* `s3-db` (Internal MySQL)
+* `s4-files` (Internal)
+* `s5s6-ssh` (Port `2222` exposed)
 
 ---
 
-### Step 2: Deploy Machine 2 (CTFd Platform & Scoring)
+### 3. Start Machine 2 (CTFd Platform & Scoring Engine)
 In a separate terminal or the same host:
+
 ```bash
+# Navigate to Machine 2 directory
 cd machine2-ctfd
+
+# Start CTFd platform and MariaDB database
 docker compose up -d
 ```
-*Verify CTFd is running:*
+
+**Verify Machine 2 Status:**
 ```bash
 docker compose ps
 ```
-The platform initializes automatically from the included database dump `ctfd-db/init.sql`.
+*Expected running services:*
+* `nginx-control` (Port `8000` exposed)
+* `ctfd` (Internal Python WSGI)
+* `ctfd-db` (Internal MariaDB 10.11)
 
 ---
 
-### Step 3: Access Challenge & Platform Interfaces
-* **Challenge Web Target (Machine 1):** `http://localhost/` (Port 80)
-* **SSH Challenge Target (Machine 1):** `ssh deploy@localhost -p 2222` (Password: `D3pl0y#S3cur3!`)
-* **CTFd Platform (Machine 2):** `http://localhost:8000/` (Port 8000)
-  * **Admin Account:** `admin` | **Password:** `BreachPoint2026!`
+### 4. Access URLs & Service Endpoints
+
+| Service | Target URL / Connection Command | Access Credentials |
+|---|---|---|
+| **NovaTech Corporate Website (Stage 1)** | `http://localhost/` (Port 80) | Unauthenticated |
+| **API Endpoint (Stage 2)** | `http://localhost/api/v1/users` | Unauthenticated |
+| **Admin Portal (Stage 3)** | `http://localhost/novatech-portal/` | Harvested from Stage 2: `admin` : `N0v4T3ch@dm1n` |
+| **System Diagnostics Tool (Stage 4)** | `http://localhost/files/` | Unlocked after Stage 3 cookie tampering |
+| **SSH Target Server (Stage 5 & 6)** | `ssh deploy@localhost -p 2222` | Harvested from Stage 4: `deploy` : `D3pl0y#S3cur3!` |
+| **CTFd Scoring Platform** | `http://localhost:8000/` (Port 8000) | **Admin:** `admin` \| **Pass:** `BreachPoint2026!` |
 
 ---
 
-## 🔄 Reset & Recovery Mechanism (Requirement 5)
+### 5. Stop the Containers
 
-To reset the CTF box back to its initial clean state at any time during testing:
+```bash
+# Stop Machine 1
+cd machine1-challenges
+docker compose down
 
-### Reset Machine 1 (Challenges):
+# Stop Machine 2
+cd machine2-ctfd
+docker compose down
+```
+
+---
+
+## 🔄 Reset & Disaster Recovery (Requirement 5)
+
+A core requirement is the ability to restore the environment to its pristine initial state within seconds if an attacker breaks a container or corrupts files.
+
+### Full Reset of Machine 1 (Challenges):
 ```bash
 cd machine1-challenges
+
+# Teardown containers and purge all temporary volumes
 docker compose down -v
+
+# Rebuild clean container images and restart
 docker compose up -d --build
 ```
-*Effect:* Purges all attacker artifacts in `/tmp`, restores original `~/.bash_history`, re-initializes MySQL database tables, and rebuilds pristine containers in under 45 seconds.
+*What this restores:*
+* Deletes all attacker-created files in `/tmp` and home directories.
+* Re-seeds `~/.bash_history` and re-encrypts `suspicious.zip`.
+* Drops and re-initializes `s3-db` MySQL tables from `init.sql`.
+* Restores all web files and SUID file permissions in under 45 seconds.
 
-### Reset Machine 2 (CTFd Scoring):
+### Full Reset of Machine 2 (CTFd Platform):
 ```bash
 cd machine2-ctfd
 docker compose down
-# To restore pristine database with challenges pre-loaded:
+# To perform a complete database wipe and re-initialize from init.sql:
+Remove-Item -Recurse -Force "ctfd/mysql-data"   # PowerShell
+# or: rm -rf ctfd/mysql-data                    # Linux/macOS
 docker compose up -d
 ```
 
@@ -161,62 +194,78 @@ docker compose up -d
 
 ## 🛠️ Self-Developed Exploit & Solver Scripts (LO3 Compliance)
 
-To satisfy Learning Outcome 3 and Requirement 6, each group member authored and verified a standalone Python automation script located in the [`scripts/`](scripts/) directory:
+To satisfy Learning Outcome 3 and Requirement 6, each group member authored and validated original Python automation scripts in the [`scripts/`](scripts/) directory:
 
-### 1. Member 1: Platform & Architecture Audit
-* **Script:** [`scripts/audit_platform.py`](scripts/audit_platform.py)
-* **Author:** Disanayaka D.M.C.N (`IT24100239`)
+### 1. Platform & Security Isolation Audit Script
+* **File:** [`scripts/audit_platform.py`](scripts/audit_platform.py)
+* **Author:** Disanayaka D.M.C.N (`IT24100239`) — Member 1
 * **Execution:**
   ```bash
   python scripts/audit_platform.py
   ```
-* **Function:** Automatically checks container health, port bindings, validates that MySQL (3306) is blocked from external access, verifies Nginx routing rules, and audits container Linux capabilities.
+* **Capabilities:** Checks container health, verifies host ingress port restrictions, confirms database port 3306 is shielded, tests Nginx routing endpoints, and verifies that `CAP_SYS_ADMIN` is dropped on the SUID container.
 
-### 2. Member 2: Automated Solver for Stages 1 to 3
-* **Script:** [`scripts/solve_stages_1_to_3.py`](scripts/solve_stages_1_to_3.py)
-* **Author:** Abeysekara T.T (`IT24100172`)
+### 2. Stages 1–3 Automated Reconnaissance & Exploitation Chain
+* **File:** [`scripts/solve_stages_1_to_3.py`](scripts/solve_stages_1_to_3.py)
+* **Author:** Abeysekara T.T (`IT24100172`) — Member 2
 * **Execution:**
   ```bash
   python scripts/solve_stages_1_to_3.py
   ```
-* **Function:** Automates OSINT HTML comment and PNG metadata parsing (S1), unauthenticated API endpoint credential extraction (S2), and simulates web authentication + cookie tampering (`nova_role=admin`) to reveal the Stage 3 flag.
+* **Capabilities:** Automates HTML comment & PNG metadata extraction (S1), unauthenticated API harvesting (S2), and handles session login with cookie tampering (`nova_role=admin`) to reveal the Stage 3 flag.
 
-### 3. Member 3: Exploit & Decryption Solvers for Stages 4 to 6
-* **Script A:** [`scripts/exploit_stage4_crypto.py`](scripts/exploit_stage4_crypto.py)
-* **Script B:** [`scripts/solve_stages_5_and_6.py`](scripts/solve_stages_5_and_6.py)
-* **Author:** Hewavitharana H.U.P (`IT24100258`)
+### 3. Stage 4 Command Injection & 3-Layer Decryption Solver
+* **File:** [`scripts/exploit_stage4_crypto.py`](scripts/exploit_stage4_crypto.py)
+* **Author:** Hewavitharana H.U.P (`IT24100258`) — Member 3
 * **Execution:**
   ```bash
   python scripts/exploit_stage4_crypto.py
+  ```
+* **Capabilities:** Sends OS command injection payload `127.0.0.1; cat /opt/backups/config_backup.enc`, exfiltrates ciphertext, and reverses all 3 encryption layers (Base64 ➔ ROT13 ➔ Vigenère key `lk`).
+
+### 4. Stages 5 & 6 Forensics, Archive Cracking & Privilege Escalation Solver
+* **File:** [`scripts/solve_stages_5_and_6.py`](scripts/solve_stages_5_and_6.py)
+* **Author:** Hewavitharana H.U.P (`IT24100258`) — Member 3
+* **Execution:**
+  ```bash
   python scripts/solve_stages_5_and_6.py
   ```
-* **Function:** 
-  * `exploit_stage4_crypto.py`: Injects command payload to exfiltrate `config_backup.enc` and programmatically reverses the 3 cryptographic layers (Base64 ➔ ROT13 ➔ Vigenère key `lk`).
-  * `solve_stages_5_and_6.py`: Inspects remote shell history, performs an offline dictionary attack against `suspicious.zip` using candidate wordlists (`shadow123`), and executes the `/usr/local/bin/reader` SUID privilege escalation to capture `/root/flag.txt`.
+* **Capabilities:** Inspects remote `.bash_history`, simulates SCP exfiltration, launches an offline dictionary attack cracking `suspicious.zip` (`shadow123`), extracts `notes.txt`, and leverages the `/usr/local/bin/reader` SUID binary to extract the root flag.
 
-### 4. Member 4: End-to-End Kill Chain & Flag Validation Engine
-* **Script:** [`scripts/validate_killchain_e2e.py`](scripts/validate_killchain_e2e.py)
-* **Author:** Haggalla H.H.D.S (`IT24100975`)
+### 5. End-to-End Kill Chain & Flag Validation Engine
+* **File:** [`scripts/validate_killchain_e2e.py`](scripts/validate_killchain_e2e.py)
+* **Author:** Haggalla H.H.D.S (`IT24100975`) — Member 4
 * **Execution:**
   ```bash
   python scripts/validate_killchain_e2e.py
   ```
-* **Function:** Tests and validates all 6 flags against SHA-256 signatures, runs forgery rejection tests with malformed flags, and verifies point progression compliance.
+* **Capabilities:** Standalone validation engine verifying all 6 flags against SHA-256 signatures, testing rejection of forged flags, and confirming score progression compliance.
 
 ---
 
-## 📝 Design Changes & QA Defect Resolution (Member 4 Presentation)
+## 🔒 Security Hardening & Isolation Controls (Requirement 4)
 
-During integration and calibration testing led by **Haggalla H.H.D.S (IT24100975)**, four key defects were identified in the Assignment 01 initial design and resolved to prevent trivial shortcuts (Requirement 7) and maintain difficulty calibration:
+1. **Host Ingress Minimization:**
+   Only ports 80 and 2222 are published on Machine 1, and port 8000 on Machine 2. All inter-container dependencies (databases, application containers) run on internal subnets with zero external host port binding.
+2. **Network Egress Restrictions:**
+   Challenge containers reside on isolated internal Docker networks (`internal: true`) preventing outbound traffic to institutional or public internet infrastructure.
+3. **Container Escape Mitigations:**
+   Stage 6 SUID execution is restricted to the container namespace using fine-grained Linux capabilities (`CAP_SETUID` and `CAP_SETGID`). High-risk host privileges (`CAP_SYS_ADMIN`, host root filesystem mounts, Docker socket sharing) are strictly omitted.
 
-| Defect ID | Stage | Initial Assignment 01 Design | QA Defect Identified by Haggalla | Assignment 02 Updated Implementation | Justification |
+---
+
+## 📝 Design Iterations & Defect Resolutions (Member 4 QA Report)
+
+Following integration testing led by **Haggalla H.H.D.S (IT24100975)**, four key defects were identified in the initial Assignment 01 design and patched to eliminate unintended shortcuts (Requirement 7):
+
+| Defect ID | Stage | Initial Assignment 01 Design | QA Defect Identified by Haggalla | Updated Implementation (Patch) | Technical Justification |
 |:---:|:---:|:---|:---|:---|:---|
-| **BUG-01** | **Stage 1** | Plain HTML comment visible via browser right-click ➔ *View Source*. | **Trivial Shortcut:** Participants bypassed command-line reconnaissance and DevTools entirely. | Injected active JavaScript policy blocking right-click context menu and `Ctrl+U`. | Strictly enforces Browser DevTools (`F12`) or CLI `curl` (LO1). |
-| **BUG-03** | **Stage 3** | Submitting Stage 2 credentials immediately rendered the flag and `/files/` link. | **Difficulty Insufficiency:** No active web vulnerability or exploitation required; failed "Moderate" standard. | Implemented **OWASP A01: Broken Access Control** via client-controlled cookie (`nova_role=guest` ➔ `admin`). | Forces cookie inspection and manipulation via Burp Suite / DevTools (LO2). |
-| **BUG-04** | **Stage 4** | `config_backup.enc` was stored in `/var/www/html/backups/`. | **Unintended Direct Download:** Participants could browse directly to `/files/backups/config_backup.enc` and bypass Command Injection. | Relocated archive to `/opt/backups/` outside Apache web root in `Dockerfile`. | Mandates OS Command Injection (`cat /opt/backups/...`) to retrieve the ciphertext. |
+| **BUG-01** | **Stage 1** | Plain HTML comment visible via browser right-click ➔ *View Page Source*. | **Trivial Shortcut:** Participants bypassed command-line tools and DevTools entirely. | Injected JavaScript policy blocking right-click contextmenu and `Ctrl+U`. | Strictly enforces Browser DevTools (`F12`) or CLI `curl` (LO1). |
+| **BUG-03** | **Stage 3** | Entering Stage 2 credentials immediately revealed the flag and diagnostic tool link. | **Difficulty Insufficiency:** Pass-through form with no active exploitation; failed "Moderate" standard. | Implemented **OWASP A01: Broken Access Control** via client-controlled cookie (`nova_role=guest` ➔ `admin`). | Enforces session cookie inspection and privilege escalation via Burp Suite (LO2). |
+| **BUG-04** | **Stage 4** | `config_backup.enc` was stored in `/var/www/html/backups/`. | **Unintended Direct Download:** Participants could browse directly to `/files/backups/config_backup.enc` without command injection. | Relocated archive to `/opt/backups/` outside the Apache web root in `Dockerfile`. | Mandates OS Command Injection (`cat /opt/backups/...`) to retrieve ciphertext. |
 | **BUG-05** | **Stage 5** | Password stored in plaintext file `/home/deploy/.secret_key`. | **Missing Tool Enforcement:** Local `cat` bypassed offline cracking; cracking inside container is unrealistic. | Deleted `.secret_key`, encrypted zip with `shadow123`, requiring remote `scp` exfiltration to Kali. | Enforces real-world data exfiltration and offline cracking with John the Ripper / `rockyou.txt` (LO2). |
 
-*A complete deep-dive with code diffs, test logs, and spoken scripts is documented in [`DESIGN_CHANGES_AND_TESTING_REPORT.md`](DESIGN_CHANGES_AND_TESTING_REPORT.md).*
+*Full testing logs, test cases (TC-01 to TC-08), and code diffs are available in [`DESIGN_CHANGES_AND_TESTING_REPORT.md`](DESIGN_CHANGES_AND_TESTING_REPORT.md).*
 
 ---
 
@@ -225,18 +274,18 @@ During integration and calibration testing led by **Haggalla H.H.D.S (IT24100975
 ```text
 BreachPoint_CTF/
 ├── machine1-challenges/
-│   ├── docker-compose.yml              # Challenge host orchestration
-│   ├── nginx-proxy/                    # Ingress reverse proxy (:80)
-│   ├── s1-web/                         # Stage 1: Static site & EXIF logo
+│   ├── docker-compose.yml              # Challenge orchestration file (Machine 1)
+│   ├── nginx-proxy/                    # Nginx reverse proxy routing (:80)
+│   ├── s1-web/                         # Stage 1: Static website & EXIF logo
 │   ├── s2-api/                         # Stage 2: PHP API leaking admin credentials
 │   ├── s3-portal/                      # Stage 3: PHP auth portal & MySQL init.sql
 │   ├── s4-files/                       # Stage 4: Diagnostics utility & /opt/backups/
 │   └── s5s6-ssh/                       # Stage 5 & 6: OpenSSH container & SUID binary
 ├── machine2-ctfd/
-│   ├── docker-compose.yml              # Scoring host orchestration (:8000)
+│   ├── docker-compose.yml              # Platform orchestration file (Machine 2)
 │   ├── ctfd-db/                        # MariaDB 10.11 pre-seeded dump (init.sql)
 │   ├── ctfd/                           # CTFd configuration, seed.py & challenges.json
-│   └── nginx-proxy/                    # Control reverse proxy
+│   └── nginx-proxy/                    # Control proxy routing (:8000)
 ├── scripts/
 │   ├── audit_platform.py               # Member 1: Platform & isolation audit script
 │   ├── solve_stages_1_to_3.py          # Member 2: Stages 1–3 solver script
@@ -245,39 +294,14 @@ BreachPoint_CTF/
 │   └── validate_killchain_e2e.py       # Member 4: Flag hash validation & kill chain engine
 ├── generate_enc.py                     # Script generating 3-layer encrypted backup
 ├── make_logo.py                        # Script embedding metadata chunk into logo
-├── DESIGN_CHANGES_AND_TESTING_REPORT.md# QA testing logs, defect tracking & presentation guide
+├── DESIGN_CHANGES_AND_TESTING_REPORT.md# QA testing logs, defect tracking & diffs
 ├── TEAM_ROLES_AND_VIVA_PLAN.md         # Individual contribution matrix & viva guide
 └── README.md                           # Master project documentation
 ```
 
 ---
 
-## 🎥 Video Demonstration Structure (Max 20 Minutes)
+## ⚖️ Academic Integrity & External Tool Acknowledgments
 
-The demonstration video is structured into four distinct, unscripted technical segments recorded from the running environment:
-
-1. **Segment 1 — Member 1: Disanayaka D.M.C.N (0:00 – 5:00)**  
-   * Scratch deployment via Docker Compose.
-   * Architecture vs. design comparison, network isolation, and port exposure.
-   * CTFd platform availability and reset mechanism demonstration.
-   * Execution of [`scripts/audit_platform.py`](scripts/audit_platform.py).
-2. **Segment 2 — Member 2: Abeysekara T.T (5:00 – 10:00)**  
-   * Building of Stages 1, 2, and 3 (code, configuration, flag placement).
-   * Live solution along intended path: DevTools inspection, `curl`, `gobuster`, API leak, and cookie tampering (`nova_role=admin`).
-   * Execution of [`scripts/solve_stages_1_to_3.py`](scripts/solve_stages_1_to_3.py).
-3. **Segment 3 — Member 3: Hewavitharana H.U.P (10:00 – 15:00)**  
-   * Building of Stages 4, 5, and 6 (diagnostics tool, OpenSSH setup, custom SUID C wrapper).
-   * Live solution along intended path: Command injection exfiltration, CyberChef 3-layer decryption, `scp` exfiltration, offline John the Ripper cracking, and GTFOBins pager escape to root.
-   * Execution of [`scripts/exploit_stage4_crypto.py`](scripts/exploit_stage4_crypto.py) and [`scripts/solve_stages_5_and_6.py`](scripts/solve_stages_5_and_6.py).
-4. **Segment 4 — Member 4: Haggalla H.H.D.S (15:00 – 20:00)**  
-   * End-to-end kill chain flow and flag progression across all 6 stages.
-   * Testing evidence (TC-01 through TC-08) and defect resolutions (BUG-01, BUG-03, BUG-04, BUG-05).
-   * Technical justification of design changes from Assignment 01.
-   * Execution of [`scripts/validate_killchain_e2e.py`](scripts/validate_killchain_e2e.py).
-
----
-
-## ⚖️ Academic Integrity & Tool Acknowledgment
-
-* All vulnerability scenarios were created in isolated Docker containers for educational assessment within the IE3132 module.
-* External tools utilized: Docker, Docker Compose, CTFd v3.8, Nginx, Apache2, MariaDB, OpenSSH, ExifTool, Gobuster, Burp Suite Community Edition, CyberChef (GCHQ), John the Ripper, and GTFOBins.
+* All vulnerability scenarios and configurations were built in isolated Docker containers specifically for educational evaluation within the IE3132 module at SLIIT.
+* **External Frameworks & Tools Acknowledged:** Docker, Docker Compose, CTFd v3.8, Nginx, Apache2, MariaDB, OpenSSH, ExifTool, Gobuster, Burp Suite Community Edition, CyberChef (GCHQ), John the Ripper, and GTFOBins.
