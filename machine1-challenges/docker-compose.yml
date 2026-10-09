@@ -1,0 +1,108 @@
+version: '3.8'
+
+networks:
+  ctf-challenges:
+    driver: bridge
+    internal: true      # challenge containers can't reach internet
+  ctf-proxy:
+    driver: bridge
+
+services:
+
+  nginx-proxy:
+    image: nginx:alpine
+    container_name: nginx-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - ctf-proxy
+      - ctf-challenges
+    depends_on:
+      - s1-web
+      - s2-api
+      - s3-portal
+      - s4-files
+    restart: unless-stopped
+
+  s1-web:
+    build: ./s1-web
+    container_name: s1-web
+    ports:
+      - "8081:80"
+    networks:
+      - ctf-challenges
+    restart: unless-stopped
+
+  s2-api:
+    build: ./s2-api
+    container_name: s2-api
+    networks:
+      - ctf-challenges
+    restart: unless-stopped
+
+  s3-portal:
+    build: ./s3-portal
+    container_name: s3-portal
+    networks:
+      - ctf-challenges
+    environment:
+      - DB_HOST=s3-db
+      - DB_USER=novatech
+      - DB_PASS=portalpass
+      - DB_NAME=novaportal
+    depends_on:
+      s3-db:
+        condition: service_healthy    
+    restart: unless-stopped
+
+  s3-db:
+    image: mysql:8.0
+    container_name: s3-db
+    networks:
+      - ctf-challenges
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootpass
+      - MYSQL_DATABASE=novaportal
+      - MYSQL_USER=novatech
+      - MYSQL_PASSWORD=portalpass
+    volumes:
+      - ./s3-portal/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost",
+             "-u", "novatech", "-pportalpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+      start_period: 30s
+
+  s4-files:
+    build: ./s4-files
+    container_name: s4-files
+    networks:
+      - ctf-challenges
+    restart: unless-stopped
+
+  s5s6-ssh:
+    build: ./s5s6-ssh
+    container_name: s5s6-ssh
+    ports:
+      - "2222:22"
+    networks:
+      - ctf-proxy
+      - ctf-challenges
+    cap_drop:
+      - ALL
+    cap_add:
+      - SETUID
+      - SETGID
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - AUDIT_WRITE
+      - SYS_CHROOT
+    security_opt:
+      - no-new-privileges:false
+    restart: unless-stopped

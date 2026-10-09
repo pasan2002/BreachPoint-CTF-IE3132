@@ -1,0 +1,73 @@
+services:
+  ctfd:
+    image: ctfd/ctfd:latest
+    restart: always
+    environment:
+      - UPLOAD_FOLDER=/var/uploads
+      - DATABASE_URL=mysql+pymysql://ctfd_app:Secur3_CTFd_DB_Pass_2026@ctfd-db/ctfd
+      - SECRET_KEY=b948df9287c8019a3b8e4f1692df85e8d6411d3824f8d951ac9e672f78c93b12
+      - LOG_FOLDER=/var/log/CTFd
+      - ACCESS_LOG=-
+      - ERROR_LOG=-
+      - REVERSE_PROXY=true
+    volumes:
+      - ./ctfd/logs:/var/log/CTFd
+      - ./ctfd/uploads:/var/uploads
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+    depends_on:
+      - ctfd-db
+    networks:
+      - ctfd_internal
+
+  ctfd-db:
+    image: mariadb:10.11
+    container_name: ctfd-db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=R00t_Secur3_M4riaDB_Pass_2026
+      - MYSQL_USER=ctfd_app
+      - MYSQL_PASSWORD=Secur3_CTFd_DB_Pass_2026
+      - MYSQL_DATABASE=ctfd
+    volumes:
+      - ./ctfd-db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./ctfd/mysql-data:/var/lib/mysql
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
+    networks:
+      - ctfd_internal
+    command: [
+      mysqld,
+      --character-set-server=utf8mb4,
+      --collation-server=utf8mb4_unicode_ci,
+      --wait_timeout=28800,
+      --log-warnings=0,
+      --bind-address=0.0.0.0
+    ]
+
+  nginx-control:
+    image: nginx:alpine
+    container_name: nginx-control
+    restart: always
+    ports:
+      - "8000:80"
+    volumes:
+      - ./nginx-proxy/nginx.conf:/etc/nginx/nginx.conf:ro
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      - ctfd
+    networks:
+      - ctfd_internal
+
+networks:
+  ctfd_internal:
+    driver: bridge
