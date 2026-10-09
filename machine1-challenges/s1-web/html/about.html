@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>About Us – NovaTech Corp</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;900&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#0a0e1a;color:#e2e8f0}
+    nav{display:flex;justify-content:space-between;align-items:center;padding:20px 60px;background:#0d1224;border-bottom:1px solid #1e2a45;position:sticky;top:0;z-index:100}
+    .logo{font-size:1.4rem;font-weight:900;background:linear-gradient(135deg,#6366f1,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+    nav ul{list-style:none;display:flex;gap:30px}
+    nav a{color:#94a3b8;text-decoration:none;font-weight:500;transition:.2s}
+    nav a:hover{color:#6366f1}
+    .hero{padding:80px 60px 60px;max-width:900px;margin:0 auto;text-align:center}
+    h1{font-size:2.8rem;font-weight:900;background:linear-gradient(135deg,#6366f1,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:20px}
+    .section{padding:40px 60px;max-width:900px;margin:0 auto}
+    .section h2{font-size:1.5rem;font-weight:700;color:#6366f1;margin-bottom:16px;border-left:4px solid #6366f1;padding-left:16px}
+    .section p{color:#94a3b8;line-height:1.8;margin-bottom:16px}
+    .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;padding:40px 60px;max-width:900px;margin:0 auto}
+    .member{background:#0d1224;border:1px solid #1e2a45;border-radius:12px;padding:24px;text-align:center;transition:.3s}
+    .member:hover{border-color:#6366f1}
+    .avatar{width:60px;height:60px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem}
+    .member h4{font-weight:700;margin-bottom:4px}
+    .member p{color:#64748b;font-size:.85rem}
+    footer{text-align:center;padding:30px;color:#334155;border-top:1px solid #1e2a45;font-size:.85rem;margin-top:40px}
+    footer a{color:#6366f1;text-decoration:none}
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">NovaTech Corp</div>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="services.html">Services</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <!-- BPCTF{r3c0n_ -->
+  <!-- TODO: Remove the /novatech-portal admin path before production deployment -->
+
+  <section class="hero">
+    <h1>About NovaTech Corp</h1>
+    <p style="color:#64748b;font-size:1.1rem;">Founded in 2018, NovaTech Corp has grown from a small startup into a trusted software solutions provider serving clients across South Asia and beyond.</p>
+  </section>
+
+  <section class="section">
+    <h2>Our Mission</h2>
+    <p>We believe technology should be accessible, reliable, and secure. Our mission is to deliver enterprise-grade software solutions that scale with your business while maintaining the highest standards of security and performance.</p>
+    <p>With offices in Colombo and remote teams across the region, we operate a 24/7 development and support model that ensures your systems are always running at peak performance.</p>
+  </section>
+
+  <section class="section">
+    <h2>Our History</h2>
+    <p>NovaTech Corp was founded in Colombo, Sri Lanka in 2018 by a team of experienced software engineers with backgrounds in fintech and enterprise systems. Within two years, we had expanded our client base to over 50 organisations across banking, healthcare, and logistics sectors.</p>
+    <p>Today, NovaTech Corp operates as a fully distributed company with more than 120 employees and a portfolio of over 200 successful project deliveries.</p>
+  </section>
+
+  <div class="team-grid">
+    <div class="member"><div class="avatar">👨‍💼</div><h4>Rohan Perera</h4><p>CEO & Co-Founder</p></div>
+    <div class="member"><div class="avatar">👩‍💻</div><h4>Ayesha Fernando</h4><p>CTO</p></div>
+    <div class="member"><div class="avatar">👨‍🔬</div><h4>Kasun Silva</h4><p>Head of Security</p></div>
+    <div class="member"><div class="avatar">👩‍🎨</div><h4>Malsha Jayawardena</h4><p>Lead Developer</p></div>
+  </div>
+
+  <footer>
+    <p>© 2024 NovaTech Corp | <a href="https://www.novatech.lk">www.novatech.lk</a> | All Rights Reserved</p>
+  </footer>
+
+  <script>
+    // Disable right click context menu to force DevTools or curl inspection
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      alert('Security Policy: Right-click source inspection is disabled. Use developer tools or HTTP clients.');
+    });
+    // Disable Ctrl+U
+    document.onkeydown = function(e) {
+      if (e.ctrlKey && (e.key === 'u' || e.key === 'U')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+  </script>
+  
+</body>
+</html>
