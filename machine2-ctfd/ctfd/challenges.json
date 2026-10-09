@@ -1,0 +1,73 @@
+[
+  {
+    "name": "Open Eyes",
+    "category": "OSINT / Reconnaissance",
+    "description": "The attacker started with nothing except the target company name. Before touching any system directly, they performed passive reconnaissance against NovaTech Corp's public website. In doing so, they investigated sensitive information that a developer had inadvertently left behind in the page source and published corporate assets.",
+    "value": 100,
+    "flag": "BPCTF{r3c0n_m4st3r}",
+    "hints": [
+      {"content": "Always check what the browser isn't rendering for you.", "cost": 0},
+      {"content": "Images carry more than just pixels, investigate their metadata.", "cost": 20}
+    ]
+  },
+  {
+    "name": "Knock Knock",
+    "category": "Web Recon / API Security",
+    "description": "Building on the reconnaissance clues discovered in Stage 1, the attacker performed path enumeration against the corporate web server. Their objective was to map out the hidden surface of the application and locate exposed administrative and development endpoints.",
+    "value": 150,
+    "flag": "BPCTF{4p1_3xp0sur3_l34ks_cr3ds}",
+    "hints": [
+      {"content": "The server is hiding more than one path. Tools exist specifically to find them automatically.", "cost": 0},
+      {"content": "Try gobuster with a common wordlist against the web server - look at what comes back with Status 200.", "cost": 30},
+      {"content": "Once you find the API endpoint, try to access it directly — no credentials needed.", "cost": 50}
+    ]
+  },
+  {
+    "name": "The Login Wall",
+    "category": "Web Security / Authentication",
+    "description": "Armed with credentials recovered from the exposed API, the attacker navigated to NovaTech Corp's internal administrative portal. Bypassing the authentication wall granted access to the internal dashboard where restricted backup data resides.",
+    "value": 200,
+    "flag": "BPCTF{4uth_p0rt4l_4cc3ss}",
+    "hints": [
+      {"content": "You already have everything you need to get through this door. Check what Stage 2 gave you.", "cost": 0},
+      {"content": "The credentials found in the API response are valid for this portal.", "cost": 40},
+      {"content": "Logging in grants guest privileges. Inspect your session cookies in DevTools or Burp Suite to see if your role can be tampered with.", "cost": 50}
+    ]
+  },
+  {
+    "name": "Scrambled Secrets",
+    "category": "Cryptography / Web",
+    "description": "From the internal portal, the attacker located an internal diagnostic and maintenance utility. Analyzing the diagnostic tool's handling of user input revealed a critical vulnerability allowing unauthorized access to the server's encrypted configuration archives.",
+    "value": 250,
+    "flag": "BPCTF{crypt0_l4y3rs_d3c0d3d}",
+    "hints": [
+      {"content": "This tool does more than ping. Try giving it something unexpected.", "cost": 0},
+      {"content": "Look for the padding characters at the end of the cipher text. This is a well-known web encoding method.", "cost": 40},
+      {"content": "After Base64 and ROT13, the final layer needs a key. You have already found it in stage 1 — pay attention to the footer.", "cost": 70}
+    ]
+  },
+  {
+    "name": "Dead Logs Tell Tales",
+    "category": "Digital Forensics",
+    "description": "Using the recovered access credentials, the attacker established a remote SSH session into NovaTech's internal deployment server as the low-privilege deploy user. Instead of immediate escalation, they conducted post-exploitation filesystem forensics, investigating shell history and encrypted archives for leftover artifacts.",
+    "value": 350,
+    "flag": "BPCTF{f0r3ns1cs_4rt3f4ct_r3c0v3r3d}",
+    "hints": [
+      {"content": "A good investigator always checks what the previous user did on the system.", "cost": 0},
+      {"content": "Shell history records every command including references to other files that may still exist.", "cost": 60},
+      {"content": "Production containers do not host cracking tools. Transfer the encrypted archive to your workstation via scp and launch an offline dictionary attack.", "cost": 100}
+    ]
+  },
+  {
+    "name": "Root of Evil",
+    "category": "Linux / System Security",
+    "description": "Operating from the low-privilege deploy shell, the attacker audited the Linux system for privilege escalation vectors. Identifying an insecurely configured SUID binary, they leveraged a sandbox escape to break out of the restricted environment and achieve full root compromise.",
+    "value": 500,
+    "flag": "BPCTF{r00t_pr1v3sc_m1ss10n_c0mpl3t3}",
+    "hints": [
+      {"content": "On Linux, some programs run as root regardless of who executes them. Find them.", "cost": 0},
+      {"content": "Use the find command with permission flags to locate files with the SUID bit set.", "cost": 100},
+      {"content": "The binary behaves like a file reader. Once you are inside it, think about what else a file reader might let you do. GTFOBins documents exactly this.", "cost": 150}
+    ]
+  }
+]
