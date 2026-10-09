@@ -3,10 +3,10 @@ $output = '';
 $host = $_GET['host'] ?? '';
 
 if (!empty($host)) {
-    // Vulnerable OS command execution
     $cmd = "ping -c 2 " . $host;
     $output = shell_exec($cmd . " 2>&1");
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -40,8 +40,9 @@ if (!empty($host)) {
 
     <div class="terminal"><?= !empty($output) ? htmlspecialchars($output) : "System console ready. Enter a target address above." ?></div>
 
+    <!-- Sysadmin Note: In compliance with security policy, all server configuration backups have been relocated to /opt/backups/ -->
     <div class="hint">
-      🔒 Internal Maintenance Console v2.4 | Protected System
+      🔒 Internal Maintenance Console v2.4 | Automated system backup repository: <code>/opt/backups/</code>
     </div>
   </div>
 </body>
